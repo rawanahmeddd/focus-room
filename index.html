@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>✨ FOCUS ROOM</title>
+
+    <!-- PeerJS for P2P connections -->
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js">
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1a1215 0%, #0a0708 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+        }
+
+        .card {
+            background: rgba(213, 197, 200, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 219, 218, 0.08);
+            border-radius: 3.5rem;
+            padding: 2.8rem 2.5rem;
+            max-width: 820px;
+            width: 100%;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 219, 218, 0.04);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 40px 70px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 219, 218, 0.08);
+        }
+
+        h1 {
+            font-weight: 600;
+            font-size: 2.2rem;
+            color: #FFDBDA;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+            letter-spacing: -0.5px;
+        }
+
+        h1 span {
+            background: #DB7F8E;
+            color: #FFDBDA;
+            font-size: 1rem;
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .room-tag {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 219, 218, 0.05);
+            border-radius: 60px;
+            padding: 0.6rem 1.2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 219, 218, 0.06);
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .room-tag p {
+            color: #D5C5C8;
+            font-weight: 400;
+            font-size: 0.95rem;
+        }
+
+        .room-tag p span {
+            color: #FFDBDA;
+        }
+
+        .room-tag .badge {
+            background: #DB7F8E;
+            color: #FFDBDA;
+            padding: 0.2rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 0.3px;
+        }
+
+        .room-id-display {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0.4rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 700;
+            color: #FFDBDA;
+            border: 1px solid rgba(255, 219, 218, 0.10);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        .room-id-display:hover {
+            background: rgba(0, 0, 0, 0.6);
+            border-color: rgba(255, 219, 218, 0.20);
+        }
+
+        .name-input-section {
+            display: flex;
+            gap: 0.6rem;
+            align-items: center;
+            margin: 0.8rem 0;
+            flex-wrap: wrap;
+        }
+
+        .name-input-section input {
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 219, 218, 0.10);
+            background: rgba(0, 0, 0, 0.4);
+            color: #FFDBDA;
+            outline: none;
+            flex: 1;
+            min-width: 120px;
+            font-size: 0.95rem;
+            transition: border 0.2s;
+        }
+
+        .name-input-section input:focus {
+            border-color: #DB7F8E;
+            box-shadow: 0 0 20px rgba(219, 127, 142, 0.10);
+        }
+
+        .name-input-section input::placeholder {
+            color: #9DA3A4;
+        }
+
+        .name-input-section .btn {
+            flex: 0 1 auto;
+            padding: 0.4rem 1.2rem;
+            font-size: 0.9rem;
+        }
+
+        .room-controls {
+            display: flex;
+            gap: 0.6rem;
+            margin: 0.8rem 0 1.2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            background: rgba(255, 219, 218, 0.03);
+            padding: 0.8rem;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 219, 218, 0.04);
+        }
+
+        .room-controls input {
+            padding: 0.6rem 1.2rem;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 219, 218, 0.08);
+            background: rgba(0, 0, 0, 0.4);
+            color: #FFDBDA;
+            flex: 1;
+            min-width: 120px;
+            outline: none;
+            font-size: 0.95rem;
+            transition: border 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .room-controls input:focus {
+            border-color: #DB7F8E;
+            box-shadow: 0 0 20px rgba(219, 127, 142, 0.08);
+        }
+
+        .room-controls input::placeholder {
+            color: #9DA3A4;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .timer-circle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 1.5rem 0 2rem 0;
+        }
+
+        .time-display {
+            font-size: 6rem;
+            font-weight: 700;
+            letter-spacing: 5px;
+            background: linear-gradient(135deg, #FFDBDA 0%, #DB7F8E 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            text-shadow: none;
+            filter: drop-shadow(0 0 30px rgba(219, 127, 142, 0.10));
+        }
+
+        .phase-label {
+            background: rgba(255, 219, 218, 0.05);
+            padding: 0.4rem 1.6rem;
+            border-radius: 60px;
+            color: #D5C5C8;
+            font-weight: 400;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 219, 218, 0.04);
+            backdrop-filter: blur(4px);
+            margin-top: 0.2rem;
+        }
+
+        .custom-times {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+            background: rgba(255, 219, 218, 0.03);
+            padding: 0.8rem 1.5rem;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 219, 218, 0.04);
+        }
+
+        .time-input-group {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #D5C5C8;
+            font-weight: 400;
+            font-size: 0.9rem;
+        }
+
+        .time-input-group input {
+            width: 70px;
+            padding: 0.4rem 0.3rem 0.4rem 0.8rem;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 219, 218, 0.08);
+            background: rgba(0, 0, 0, 0.4);
+            color: #FFDBDA;
+            font-weight: 600;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .time-input-group input:focus {
+            border-color: #DB7F8E;
+        }
+
+        .time-input-group input::-webkit-inner-spin-button {
+            opacity: 0.6;
+        }
+
+        .motivation-box {
+            background: rgba(219, 127, 142, 0.06);
+            padding: 1rem 1.8rem;
+            border-radius: 60px;
+            text-align: center;
+            margin: 1rem 0 1.5rem;
+            border-left: 4px solid #DB7F8E;
+            border-right: 4px solid #DB7F8E;
+            min-height: 65px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .motivation-box p {
+            color: #D5C5C8;
+            font-size: 1.05rem;
+            font-weight: 400;
+            letter-spacing: 0.2px;
+        }
+
+        .motivation-box strong {
+            color: #FFDBDA;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 0.3rem;
+        }
+
+        .btn {
+            background: rgba(255, 219, 218, 0.05);
+            border: 1px solid rgba(255, 219, 218, 0.08);
+            color: #D5C5C8;
+            padding: 0.7rem 1.6rem;
+            border-radius: 60px;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(6px);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1 0 auto;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-primary {
+            background: #DB7F8E;
+            border: 1px solid #DB7F8E;
+            color: #FFDBDA;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(219, 127, 142, 0.20);
+        }
+
+        .btn-primary:hover {
+            background: #e694a2;
+            border-color: #e694a2;
+            box-shadow: 0 12px 32px rgba(219, 127, 142, 0.30);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 219, 218, 0.04);
+            border: 1px solid rgba(255, 219, 218, 0.08);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 219, 218, 0.08);
+            border-color: rgba(255, 219, 218, 0.15);
+        }
+
+        .btn-success {
+            background: rgba(219, 127, 142, 0.12);
+            border: 1px solid #DB7F8E;
+            color: #FFDBDA;
+        }
+
+        .btn-success:hover {
+            background: rgba(219, 127, 142, 0.20);
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.8rem;
+            font-size: 0.7rem;
+            border-radius: 30px;
+            background: rgba(255, 219, 218, 0.04);
+            border: 1px solid rgba(255, 219, 218, 0.06);
+            color: #D5C5C8;
+            cursor: pointer;
+            transition: 0.2s;
+            flex: 0 1 auto;
+        }
+
+        .btn-sm:hover {
+            background: rgba(255, 219, 218, 0.08);
+        }
+
+        .btn-sm-leave {
+            color: #DB7F8E;
+            border-color: rgba(219, 127, 142, 0.20);
+        }
+
+        .btn-sm-leave:hover {
+            background: rgba(219, 127, 142, 0.12);
+        }
+
+        .friends-section {
+            margin-top: 1.5rem;
+            border-top: 1px solid rgba(255, 219, 218, 0.04);
+            padding-top: 1rem;
+        }
+
+        .friends-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            color: #9DA3A4;
+            font-size: 0.9rem;
+        }
+
+        .friends-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 219, 218, 0.03);
+            padding: 0.5rem 0.8rem 0.5rem 1.2rem;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 219, 218, 0.04);
+            transition: all 0.2s;
+        }
+
+        .friend-item:hover {
+            background: rgba(255, 219, 218, 0.05);
+        }
+
+        .friend-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .friend-avatar {
+            width: 34px;
+            height: 34px;
+            background: rgba(219, 127, 142, 0.20);
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            border: 2px solid rgba(219, 127, 142, 0.25);
+        }
+
+        .friend-name {
+            color: #FFDBDA;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .friend-id {
+            color: #9DA3A4;
+            font-size: 0.7rem;
+            font-family: monospace;
+            margin-left: 0.5rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .friend-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #DB7F8E;
+            display: inline-block;
+            margin-left: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.4;
+                transform: scale(0.85);
+            }
+        }
+
+        .friend-actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .empty-friends {
+            color: #9DA3A4;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.9rem;
+            border: 1px dashed rgba(255, 219, 218, 0.06);
+            border-radius: 40px;
+        }
+
+        .footer-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            color: #9DA3A4;
+            font-size: 0.8rem;
+            border-top: 1px solid rgba(255, 219, 218, 0.04);
+            padding-top: 1.2rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .friend-status {
+            font-size: 0.8rem;
+            color: #DB7F8E;
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            background: rgba(219, 127, 142, 0.08);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 219, 218, 0.10);
+            border-top-color: #DB7F8E;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .sync-badge {
+            background: rgba(110, 200, 177, 0.15);
+            color: #6ec8b1;
+            padding: 0.1rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.6rem;
+            border: 1px solid rgba(110, 200, 177, 0.15);
+            margin-left: 0.5rem;
+        }
+
+        .short-id {
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #FFDBDA;
+            font-size: 1.2rem;
+        }
+
+        .bottom-section {
+            margin-top: 1.5rem;
+            border-top: 1px solid rgba(255, 219, 218, 0.06);
+            padding-top: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 1.8rem;
+            }
+            .time-display {
+                font-size: 4.2rem;
+                letter-spacing: 2px;
+            }
+            .btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            .custom-times {
+                gap: 1rem;
+                flex-direction: column;
+                align-items: center;
+            }
+            .room-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .friend-item {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .friend-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            .name-input-section {
+                flex-direction: column;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            .room-id-display {
+                font-size: 0.9rem;
+                padding: 0.3rem 0.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>⏳ FOCUS·ROOM <span>🩷</span></h1>
+
+        <div class="room-tag">
+            <p>🔗 <span>Focus Zone</span> · <span id="friendCount">0</span> online</p>
+            <div class="room-id-display" id="roomIdDisplay" title="Click to copy">🆔 <span id="roomIdDisplayText" class="short-id"><span class="loading-spinner"></span></span></div>
+            <span class="badge" id="statusBadge">✦ waiting</span>
+        </div>
+
+        <!-- TIMER - Now at the top -->
+        <div class="timer-circle">
+            <div class="time-display" id="timerDisplay">25:00</div>
+            <div class="phase-label" id="phaseLabel">⚡ FOCUS</div>
+        </div>
+
+        <!-- TIME SETTINGS - Focus and Break minutes -->
+        <div class="custom-times">
+            <div class="time-input-group">
+                <label>🎯 Focus <span style="color:#DB7F8E;">(min)</span></label>
+                <input type="number" id="focusMinutes" value="25" min="1" max="99" step="1" />
+            </div>
+            <div class="time-input-group">
+                <label>🌿 Break <span style="color:#DB7F8E;">(min)</span></label>
+                <input type="number" id="breakMinutes" value="5" min="1" max="30" step="1" />
+            </div>
+            <button class="btn btn-secondary" id="applyTimeBtn" style="flex:0 1 auto; padding:0.4rem 1.2rem;">⏱ apply</button>
+        </div>
+
+        <!-- MOTIVATION & CONTROLS -->
+        <div class="motivation-box">
+            <p id="motivationText">🌸 <strong>“Stay focused — you've got this!”</strong></p>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn">▶ Start</button>
+            <button class="btn btn-secondary" id="pauseBtn">⏸ Pause</button>
+            <button class="btn btn-secondary" id="resetBtn">↺ Reset</button>
+        </div>
+
+        <!-- BOTTOM SECTION: ID, Name, Connect -->
+        <div class="bottom-section">
+            <!-- Name Input -->
+            <div class="name-input-section">
+                <input type="text" id="myNameInput" placeholder="Enter your name (e.g., Alex)" maxlength="20" />
+                <button class="btn btn-primary" id="setNameBtn" style="flex:0 1 auto; padding:0.4rem 1.2rem;">✅ Set Name</button>
+            </div>
+
+            <div class="room-controls">
+                <input type="text" id="peerIdInput" placeholder="Enter friend's ID to connect" />
+                <button class="btn btn-success" id="connectBtn" style="flex:0 1 auto; padding:0.4rem 1.2rem;">🔗 Connect</button>
+                <button class="btn btn-secondary" id="copyIdBtn" style="flex:0 1 auto; padding:0.4rem 1.2rem;">📋 Copy</button>
+            </div>
+
+            <!-- Friends Section -->
+            <div class="friends-section">
+                <div class="friends-header">
+                    <span>👥 Friends in room</span>
+                    <span id="connectionStatus" class="friend-status">⚪ Not connected</span>
+                </div>
+                <div class="friends-list" id="friendsList">
+                    <div class="empty-friends">No friends connected yet. Share your ID above!</div>
+                </div>
+            </div>
+
+            <div class="footer-meta">
+                <span>🏆 <span id="sessionCount">0</span> sessions</span>
+                <span id="peerStatus">📡 Disconnected</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            "use strict";
+
+            // ----- DOM refs -----
+            const timerDisplay = document.getElementById('timerDisplay');
+            const phaseLabel = document.getElementById('phaseLabel');
+            const motivationText = document.getElementById('motivationText');
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const sessionCountSpan = document.getElementById('sessionCount');
+            const friendCountSpan = document.getElementById('friendCount');
+            const roomIdDisplayText = document.getElementById('roomIdDisplayText');
+            const roomIdDisplay = document.getElementById('roomIdDisplay');
+            const statusBadge = document.getElementById('statusBadge');
+            const connectionStatus = document.getElementById('connectionStatus');
+            const peerStatus = document.getElementById('peerStatus');
+            const friendsList = document.getElementById('friendsList');
+
+            const focusInput = document.getElementById('focusMinutes');
+            const breakInput = document.getElementById('breakMinutes');
+            const applyTimeBtn = document.getElementById('applyTimeBtn');
+            const peerIdInput = document.getElementById('peerIdInput');
+            const connectBtn = document.getElementById('connectBtn');
+            const copyIdBtn = document.getElementById('copyIdBtn');
+
+            const myNameInput = document.getElementById('myNameInput');
+            const setNameBtn = document.getElementById('setNameBtn');
+
+            // ----- Helper: Generate 4-digit numeric ID -----
+            function generateShortId() {
+                let result = '';
+                for (let i = 0; i < 4; i++) {
+                    result += Math.floor(Math.random() * 10);
+                }
+                return result;
+            }
+
+            // ----- State (with localStorage persistence) -----
+            const STORAGE_KEY_STATE = 'focusRoomState_v4';
+            const STORAGE_KEY_SHORT_ID = 'focusShortId_v3';
+            const STORAGE_KEY_FULL_ID = 'focusFullId_v1';
+
+            function loadState() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY_STATE);
+                    if (!raw) return null;
+                    return JSON.parse(raw);
+                } catch { return null; }
+            }
+
+            function saveState() {
+                const state = {
+                    isWorkPhase,
+                    timeLeft,
+                    isPaused,
+                    sessionCounter,
+                    workTime: WORK_TIME,
+                    breakTime: BREAK_TIME,
+                    lastUpdate: Date.now()
+                };
+                localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(state));
+            }
+
+            // Defaults
+            let WORK_TIME = 25 * 60;
+            let BREAK_TIME = 5 * 60;
+            let timer = null;
+            let timeLeft = WORK_TIME;
+            let isPaused = true;
+            let isWorkPhase = true;
+            let sessionCounter = 0;
+
+            // ----- CRITICAL: Restore and sync timer state on refresh -----
+            function restoreAndSyncState() {
+                const saved = loadState();
+                if (saved) {
+                    WORK_TIME = saved.workTime || WORK_TIME;
+                    BREAK_TIME = saved.breakTime || BREAK_TIME;
+                    isWorkPhase = saved.isWorkPhase !== undefined ? saved.isWorkPhase : true;
+                    sessionCounter = saved.sessionCounter || 0;
+                    isPaused = saved.isPaused !== undefined ? saved.isPaused : true;
+
+                    const now = Date.now();
+                    const elapsed = Math.floor((now - saved.lastUpdate) / 1000);
+
+                    if (!saved.isPaused) {
+                        let newTimeLeft = saved.timeLeft - elapsed;
+                        let phaseSwitches = 0;
+                        while (newTimeLeft <= 0 && phaseSwitches < 10) {
+                            isWorkPhase = !isWorkPhase;
+                            if (isWorkPhase) {
+                                newTimeLeft = newTimeLeft + WORK_TIME;
+                            } else {
+                                newTimeLeft = newTimeLeft + BREAK_TIME;
+                                sessionCounter++;
+                            }
+                            phaseSwitches++;
+                        }
+                        timeLeft = Math.max(1, newTimeLeft);
+                        isPaused = false;
+                    } else {
+                        timeLeft = saved.timeLeft;
+                    }
+
+                    focusInput.value = Math.round(WORK_TIME / 60);
+                    breakInput.value = Math.round(BREAK_TIME / 60);
+
+                    updateDisplay();
+                    setRandomQuote();
+
+                    if (!isPaused) {
+                        startTimer();
+                    }
+
+                    motivationText.innerHTML =
+                        `<strong>“🔄 Restored (${isWorkPhase ? 'Focus' : 'Break'})”</strong>`;
+                    setTimeout(setRandomQuote, 2000);
+                } else {
+                    focusInput.value = Math.round(WORK_TIME / 60);
+                    breakInput.value = Math.round(BREAK_TIME / 60);
+                    updateDisplay();
+                    setRandomQuote();
+                }
+            }
+
+            let myName = localStorage.getItem('focusUserName') || 'You';
+            myNameInput.value = myName;
+
+            // ----- Get or generate 4-digit numeric ID, ensure it's numeric -----
+            let myShortId = localStorage.getItem(STORAGE_KEY_SHORT_ID);
+            if (!myShortId || !/^\d{4}$/.test(myShortId)) {
+                myShortId = generateShortId();
+                localStorage.setItem(STORAGE_KEY_SHORT_ID, myShortId);
+            }
+
+            // ----- PeerJS -----
+            let peer = null;
+            let myPeerId = null;
+            let connections = [];
+            let connectedFriends = [];
+            let friendsWithNames = {};
+            let reconnectAttempts = 0;
+            const MAX_RECONNECT_ATTEMPTS = 5;
+            const STORAGE_KEY_CONNECTIONS = 'focusConnections_v3';
+            let isPeerInitialized = false;
+
+            // ----- Sync guard -----
+            let isApplyingRemoteUpdate = false;
+
+            // ----- Quotes -----
+            const workQuotes = [
+                "🌸 Stay locked in — every second builds momentum.",
+                "🌷 You're stronger than distraction.",
+                "🌹 This focus session is your superpower.",
+                "🌺 Push through — greatness is built in silence.",
+                "🌻 One task, full attention.",
+                "🌸 The work you do now compounds.",
+                "🌷 Deep focus = deep results."
+            ];
+
+            const breakQuotes = [
+                "☕ Recharge — you earned this pause.",
+                "🧘 Breathe, stretch, reset.",
+                "✨ Short break, big clarity.",
+                "🎵 Enjoy the pause — then return stronger.",
+                "🌿 Rest is part of the process.",
+                "💬 Take a moment, you're doing great."
+            ];
+
+            // ----- Helper functions -----
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            function setRandomQuote() {
+                const quotes = isWorkPhase ? workQuotes : breakQuotes;
+                const q = quotes[Math.floor(Math.random() * quotes.length)];
+                motivationText.innerHTML = `<strong>“${q}”</strong>`;
+            }
+
+            function updateDisplay() {
+                timerDisplay.textContent = formatTime(timeLeft);
+                const phaseText = isWorkPhase ? '⚡ FOCUS · work' : '🌿 BREAK · recharge';
+                phaseLabel.innerHTML = phaseText + ' <span class="sync-badge">🔄 synced</span>';
+                saveState();
+            }
+
+            function getAvatarEmoji(name) {
+                const emojis = ['🌸', '🌷', '🌹', '🌺', '🌻', '🌿', '🌾', '🌼'];
+                const index = name.length % emojis.length;
+                return emojis[index];
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function renderFriends() {
+                const friendIds = Object.keys(friendsWithNames);
+
+                if (friendIds.length === 0) {
+                    friendsList.innerHTML =
+                        `<div class="empty-friends">No friends connected yet. Share your ID above!</div>`;
+                    friendCountSpan.textContent = '0';
+                    return;
+                }
+
+                let html = '';
+                friendIds.forEach(id => {
+                    const name = friendsWithNames[id] || 'Friend';
+                    // Show only first 4 chars of ID for display
+                    const displayId = id.length > 4 ? id.substring(0, 4) : id;
+                    html += `
+                        <div class="friend-item" data-id="${id}">
+                            <div class="friend-info">
+                                <div class="friend-avatar">${getAvatarEmoji(name)}</div>
+                                <div>
+                                    <span class="friend-name">${escapeHtml(name)}</span>
+                                    <span class="friend-id">${displayId}</span>
+                                    <span class="friend-status-dot"></span>
+                                </div>
+                            </div>
+                            <div class="friend-actions">
+                                <button class="btn-sm btn-sm-leave" onclick="window.removeFriend('${id}')">✕ Leave</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                friendsList.innerHTML = html;
+                friendCountSpan.textContent = friendIds.length;
+            }
+
+            // ----- Broadcast timer state to all friends -----
+            function broadcastTimerState() {
+                const data = {
+                    type: 'timerUpdate',
+                    isWorkPhase: isWorkPhase,
+                    timeLeft: timeLeft,
+                    sessionCounter: sessionCounter,
+                    isPaused: isPaused
+                };
+                connections.forEach(conn => {
+                    try {
+                        conn.send(data);
+                    } catch (e) { /* ignore */ }
+                });
+            }
+
+            window.removeFriend = function(friendId) {
+                let connToRemove = null;
+                for (let i = 0; i < connections.length; i++) {
+                    if (connections[i].peer === friendId) {
+                        connToRemove = connections[i];
+                        break;
+                    }
+                }
+
+                if (connToRemove) {
+                    try {
+                        connToRemove.send({ type: 'friendLeft' });
+                        connToRemove.close();
+                    } catch (e) { /* ignore */ }
+
+                    const idx = connections.indexOf(connToRemove);
+                    if (idx > -1) connections.splice(idx, 1);
+
+                    const idx2 = connectedFriends.indexOf(friendId);
+                    if (idx2 > -1) connectedFriends.splice(idx2, 1);
+
+                    const name = friendsWithNames[friendId] || 'Friend';
+                    delete friendsWithNames[friendId];
+
+                    renderFriends();
+                    updateConnectionStatus();
+                    removeConnection(friendId);
+
+                    motivationText.innerHTML = `<strong>“👋 ${escapeHtml(name)} left.”</strong>`;
+                    setTimeout(setRandomQuote, 2000);
+                }
+            };
+
+            function updateConnectionStatus() {
+                const count = Object.keys(friendsWithNames).length;
+                if (count > 0) {
+                    connectionStatus.textContent = `🟢 ${count} friend(s) connected`;
+                    statusBadge.textContent = `✦ ${count} online`;
+                } else {
+                    connectionStatus.textContent = '⚪ No friends connected';
+                    statusBadge.textContent = '✦ waiting';
+                }
+            }
+
+            // ----- Store Peer ID (display only short version) -----
+            function storePeerId(id) {
+                // Store the full ID for copying
+                localStorage.setItem(STORAGE_KEY_FULL_ID, id);
+                // Display only first 4 chars
+                const displayId = id.length > 4 ? id.substring(0, 4) : id;
+                roomIdDisplayText.textContent = displayId;
+                roomIdDisplay.title = `Full ID: ${id} (click to copy)`;
+            }
+
+            // ----- Save connection for reconnection -----
+            function saveConnection(friendId) {
+                let connections = [];
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY_CONNECTIONS);
+                    if (saved) {
+                        connections = JSON.parse(saved);
+                    }
+                } catch (e) { /* ignore */ }
+
+                if (!connections.includes(friendId)) {
+                    connections.push(friendId);
+                    localStorage.setItem(STORAGE_KEY_CONNECTIONS, JSON.stringify(connections));
+                }
+            }
+
+            function removeConnection(friendId) {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY_CONNECTIONS);
+                    if (saved) {
+                        let connections = JSON.parse(saved);
+                        connections = connections.filter(id => id !== friendId);
+                        localStorage.setItem(STORAGE_KEY_CONNECTIONS, JSON.stringify(connections));
+                    }
+                } catch (e) { /* ignore */ }
+            }
+
+            // ----- Attempt to reconnect to friends after refresh -----
+            function attemptReconnect() {
+                const savedConnections = localStorage.getItem(STORAGE_KEY_CONNECTIONS);
+                if (savedConnections) {
+                    try {
+                        const friends = JSON.parse(savedConnections);
+                        friends.forEach(friendId => {
+                            if (friendId !== myPeerId && !friendsWithNames[friendId]) {
+                                console.log('🔄 Reconnecting to:', friendId);
+                                connectToPeer(friendId, true);
+                            }
+                        });
+                    } catch (e) { /* ignore */ }
+                }
+            }
+
+            // ----- PeerJS initialization with retry -----
+            function initPeer() {
+                const options = {
+                    host: '0.peerjs.com',
+                    port: 443,
+                    secure: true,
+                    debug: 2
+                };
+
+                // Use the 4-digit numeric ID
+                options.id = myShortId;
+
+                roomIdDisplayText.innerHTML = `<span class="loading-spinner"></span>`;
+
+                if (peer) {
+                    peer.destroy();
+                }
+                peer = new Peer(options);
+
+                peer.on('open', (id) => {
+                    myPeerId = id;
+                    // Store the actual ID
+                    if (id !== myShortId) {
+                        myShortId = id;
+                        localStorage.setItem(STORAGE_KEY_SHORT_ID, myShortId);
+                    }
+                    storePeerId(id);
+                    statusBadge.textContent = '✦ online';
+                    peerStatus.textContent = `🟢 ID: ${id.substring(0, 4)}...`;
+                    connectionStatus.textContent = '🟢 Ready';
+                    motivationText.innerHTML = `<strong>“🟢 Your ID: ${id.substring(0, 4)}... — Share it!”</strong>`;
+                    setTimeout(setRandomQuote, 3000);
+                    isPeerInitialized = true;
+
+                    setTimeout(() => {
+                        attemptReconnect();
+                    }, 1000);
+                });
+
+                peer.on('connection', (conn) => {
+                    const friendId = conn.peer;
+
+                    if (friendsWithNames[friendId]) {
+                        const existingConn = connections.find(c => c.peer === friendId);
+                        if (!existingConn) {
+                            connections.push(conn);
+                        }
+                        return;
+                    }
+
+                    connections.push(conn);
+                    if (!connectedFriends.includes(friendId)) {
+                        connectedFriends.push(friendId);
+                    }
+
+                    conn.on('data', (data) => {
+                        if (data.type === 'handshake') {
+                            friendsWithNames[friendId] = data.name || 'Friend';
+                            renderFriends();
+                            updateConnectionStatus();
+                            const displayId = friendId.length > 4 ? friendId.substring(0, 4) :
+                            friendId;
+                            motivationText.innerHTML =
+                                `<strong>“👋 ${escapeHtml(data.name || 'Friend')} (${displayId}) joined!”</strong>`;
+                            setTimeout(setRandomQuote, 2000);
+
+                            conn.send({
+                                type: 'handshake',
+                                name: myName
+                            });
+
+                            saveConnection(friendId);
+
+                            setTimeout(() => {
+                                conn.send({
+                                    type: 'timerUpdate',
+                                    isWorkPhase: isWorkPhase,
+                                    timeLeft: timeLeft,
+                                    sessionCounter: sessionCounter,
+                                    isPaused: isPaused
+                                });
+                            }, 500);
+
+                        } else if (data.type === 'friendLeft') {
+                            window.removeFriend(friendId);
+                            removeConnection(friendId);
+                        } else if (data.type === 'timerUpdate') {
+                            handleTimerSync(data);
+                        } else {
+                            handlePeerData(data, conn);
+                        }
+                    });
+
+                    conn.on('close', () => {
+                        const idx = connectedFriends.indexOf(friendId);
+                        if (idx > -1) connectedFriends.splice(idx, 1);
+                        delete friendsWithNames[friendId];
+                        renderFriends();
+                        updateConnectionStatus();
+                        removeConnection(friendId);
+                    });
+
+                    conn.send({
+                        type: 'handshake',
+                        name: myName
+                    });
+                });
+
+                peer.on('error', (err) => {
+                    console.error('Peer error:', err);
+                    if (err.type === 'unavailable-id') {
+                        myShortId = generateShortId();
+                        localStorage.setItem(STORAGE_KEY_SHORT_ID, myShortId);
+                        motivationText.innerHTML = `<strong>“⚠️ New ID: ${myShortId}”</strong>`;
+                        setTimeout(() => {
+                            peer.destroy();
+                            initPeer();
+                        }, 1000);
+                    } else if (err.type === 'disconnected' || err.type === 'socket-error') {
+                        roomIdDisplayText.innerHTML = `<span class="loading-spinner"></span>`;
+                        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                            reconnectAttempts++;
+                            setTimeout(() => {
+                                if (peer && !peer.destroyed) {
+                                    peer.reconnect();
+                                }
+                            }, 3000);
+                        }
+                    }
+                });
+            }
+
+            // ----- Handle incoming timer sync -----
+            function handleTimerSync(data) {
+                if (isApplyingRemoteUpdate) return;
+                isApplyingRemoteUpdate = true;
+
+                if (data.isWorkPhase !== isWorkPhase ||
+                    Math.abs(data.timeLeft - timeLeft) > 2 ||
+                    data.isPaused !== isPaused) {
+
+                    if (timer) {
+                        clearInterval(timer);
+                        timer = null;
+                    }
+
+                    isWorkPhase = data.isWorkPhase;
+                    timeLeft = data.timeLeft;
+                    isPaused = data.isPaused;
+                    sessionCounter = data.sessionCounter || sessionCounter;
+
+                    updateDisplay();
+                    setRandomQuote();
+
+                    if (!isPaused) {
+                        statusBadge.textContent = '▶ running';
+                        startTimer();
+                    } else {
+                        statusBadge.textContent = '⏸ paused';
+                    }
+
+                    motivationText.innerHTML = `<strong>“🔄 Synced”</strong>`;
+                    setTimeout(setRandomQuote, 1500);
+                }
+
+                isApplyingRemoteUpdate = false;
+            }
+
+            function connectToPeer(friendId, isReconnect = false) {
+                if (!peer) {
+                    motivationText.innerHTML = `<strong>“⚠️ Initializing...”</strong>`;
+                    initPeer();
+                    setTimeout(() => connectToPeer(friendId, isReconnect), 1000);
+                    return;
+                }
+
+                if (friendId === myPeerId) {
+                    if (!isReconnect) {
+                        motivationText.innerHTML = `<strong>“⚠️ That's you!”</strong>`;
+                    }
+                    return;
+                }
+
+                if (friendsWithNames[friendId]) {
+                    if (!isReconnect) {
+                        motivationText.innerHTML = `<strong>“⚠️ Already connected”</strong>`;
+                    }
+                    return;
+                }
+
+                const conn = peer.connect(friendId);
+                let handshakeComplete = false;
+
+                conn.on('open', () => {
+                    conn.send({
+                        type: 'handshake',
+                        name: myName
+                    });
+                });
+
+                conn.on('data', (data) => {
+                    if (data.type === 'handshake') {
+                        if (!handshakeComplete) {
+                            handshakeComplete = true;
+                            connections.push(conn);
+                            if (!connectedFriends.includes(friendId)) {
+                                connectedFriends.push(friendId);
+                            }
+                            friendsWithNames[friendId] = data.name || 'Friend';
+                            renderFriends();
+                            updateConnectionStatus();
+
+                            if (!isReconnect) {
+                                const displayId = friendId.length > 4 ? friendId.substring(0, 4) :
+                                    friendId;
+                                motivationText.innerHTML =
+                                    `<strong>“✅ Connected to ${escapeHtml(data.name || 'Friend')} (${displayId})!”</strong>`;
+                                setTimeout(setRandomQuote, 2000);
+                            }
+
+                            saveConnection(friendId);
+
+                            setTimeout(() => {
+                                conn.send({
+                                    type: 'timerUpdate',
+                                    isWorkPhase: isWorkPhase,
+                                    timeLeft: timeLeft,
+                                    sessionCounter: sessionCounter,
+                                    isPaused: isPaused
+                                });
+                            }, 500);
+                        }
+                    } else if (data.type === 'friendLeft') {
+                        window.removeFriend(friendId);
+                        removeConnection(friendId);
+                    } else if (data.type === 'timerUpdate') {
+                        handleTimerSync(data);
+                    } else {
+                        handlePeerData(data, conn);
+                    }
+                });
+
+                conn.on('close', () => {
+                    const idx = connectedFriends.indexOf(friendId);
+                    if (idx > -1) connectedFriends.splice(idx, 1);
+                    delete friendsWithNames[friendId];
+                    renderFriends();
+                    updateConnectionStatus();
+                    removeConnection(friendId);
+                });
+
+                conn.on('error', () => {
+                    if (!isReconnect) {
+                        motivationText.innerHTML = `<strong>“⚠️ Could not connect”</strong>`;
+                        setTimeout(setRandomQuote, 2000);
+                    }
+                });
+
+                if (!isReconnect) {
+                    setTimeout(() => {
+                        if (!handshakeComplete && !friendsWithNames[friendId]) {
+                            try { conn.close(); } catch (e) { /* ignore */ }
+                            motivationText.innerHTML = `<strong>“⚠️ Connection timed out”</strong>`;
+                            setTimeout(setRandomQuote, 2000);
+                        }
+                    }, 5000);
+                }
+            }
+
+            function handlePeerData(data, conn) {
+                if (data.type === 'chat') {
+                    motivationText.innerHTML = `<strong>“💬 ${data.message}”</strong>`;
+                    setTimeout(setRandomQuote, 3000);
+                }
+            }
+
+            function sendChatMessage(msg) {
+                const data = { type: 'chat', message: msg };
+                connections.forEach(conn => {
+                    try { conn.send(data); } catch (e) { /* ignore */ }
+                });
+            }
+
+            // ----- Timer logic -----
+            function applyCustomTimes() {
+                let focusMin = parseInt(focusInput.value) || 25;
+                let breakMin = parseInt(breakInput.value) || 5;
+                focusMin = Math.min(99, Math.max(1, focusMin));
+                breakMin = Math.min(30, Math.max(1, breakMin));
+                focusInput.value = focusMin;
+                breakInput.value = breakMin;
+
+                if (timer) {
+                    clearInterval(timer);
+                    timer = null;
+                }
+                WORK_TIME = focusMin * 60;
+                BREAK_TIME = breakMin * 60;
+                isWorkPhase = true;
+                timeLeft = WORK_TIME;
+                isPaused = true;
+                updateDisplay();
+                setRandomQuote();
+                motivationText.innerHTML = `<strong>“⏱️ ${focusMin}min / ${breakMin}min”</strong>`;
+                setTimeout(setRandomQuote, 2000);
+                broadcastTimerState();
+                saveState();
+            }
+
+            function startTimer() {
+                if (timer) {
+                    clearInterval(timer);
+                    timer = null;
+                }
+
+                if (timeLeft <= 0) {
+                    if (isWorkPhase) {
+                        timeLeft = WORK_TIME;
+                    } else {
+                        timeLeft = BREAK_TIME;
+                    }
+                }
+
+                isPaused = false;
+                statusBadge.textContent = '▶ running';
+                updateDisplay();
+                broadcastTimerState();
+                saveState();
+
+                timer = setInterval(() => {
+                    timeLeft--;
+
+                    if (timeLeft <= 0) {
+                        isWorkPhase = !isWorkPhase;
+
+                        if (isWorkPhase) {
+                            timeLeft = WORK_TIME;
+                            motivationText.innerHTML = `<strong>“💥 Back to focus!”</strong>`;
+                            sendChatMessage('💥 Focus time!');
+                        } else {
+                            timeLeft = BREAK_TIME;
+                            sessionCounter++;
+                            sessionCountSpan.textContent = sessionCounter;
+                            motivationText.innerHTML = `<strong>“🎉 Break time!”</strong>`;
+                            sendChatMessage('🎉 Break time!');
+                        }
+
+                        updateDisplay();
+                        setRandomQuote();
+                        broadcastTimerState();
+                        saveState();
+                        return;
+                    }
+
+                    updateDisplay();
+
+                    if (timeLeft % 5 === 0 && timeLeft > 0) {
+                        const quotes = isWorkPhase ? workQuotes : breakQuotes;
+                        const q = quotes[Math.floor(Math.random() * quotes.length)];
+                        motivationText.innerHTML = `<strong>“${q}”</strong>`;
+                    }
+
+                    if (timeLeft % 10 === 0) {
+                        broadcastTimerState();
+                        saveState();
+                    }
+                }, 1000);
+            }
+
+            function pauseTimer() {
+                if (timer) {
+                    clearInterval(timer);
+                    timer = null;
+                    isPaused = true;
+                    statusBadge.textContent = '⏸ paused';
+                    motivationText.innerHTML = `<strong>“⏸ Paused”</strong>`;
+                    updateDisplay();
+                    setTimeout(setRandomQuote, 2000);
+                    broadcastTimerState();
+                    saveState();
+                }
+            }
+
+            function resetTimer() {
+                if (timer) {
+                    clearInterval(timer);
+                    timer = null;
+                }
+                isPaused = true;
+                isWorkPhase = true;
+                timeLeft = WORK_TIME;
+                sessionCounter = 0;
+                sessionCountSpan.textContent = sessionCounter;
+                statusBadge.textContent = '✦ waiting';
+                updateDisplay();
+                setRandomQuote();
+                motivationText.innerHTML = `<strong>“🔄 Reset”</strong>`;
+                setTimeout(setRandomQuote, 2000);
+                broadcastTimerState();
+                saveState();
+            }
+
+            // ----- Event listeners -----
+            startBtn.addEventListener('click', startTimer);
+            pauseBtn.addEventListener('click', pauseTimer);
+            resetBtn.addEventListener('click', resetTimer);
+            applyTimeBtn.addEventListener('click', applyCustomTimes);
+
+            connectBtn.addEventListener('click', () => {
+                const friendId = peerIdInput.value.trim().toUpperCase();
+                if (!friendId) {
+                    motivationText.innerHTML = `<strong>“⚠️ Enter a friend's ID”</strong>`;
+                    return;
+                }
+                connectToPeer(friendId, false);
+                peerIdInput.value = '';
+            });
+
+            peerIdInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') connectBtn.click();
+            });
+
+            copyIdBtn.addEventListener('click', () => {
+                const fullId = localStorage.getItem(STORAGE_KEY_FULL_ID) || myPeerId;
+                if (fullId) {
+                    navigator.clipboard.writeText(fullId).then(() => {
+                        motivationText.innerHTML = `<strong>“📋 Full ID copied!”</strong>`;
+                        setTimeout(setRandomQuote, 2000);
+                    });
+                } else {
+                    motivationText.innerHTML = `<strong>“⏳ Waiting...”</strong>`;
+                }
+            });
+
+            roomIdDisplay.addEventListener('click', () => {
+                const fullId = localStorage.getItem(STORAGE_KEY_FULL_ID) || myPeerId;
+                if (fullId) {
+                    navigator.clipboard.writeText(fullId).then(() => {
+                        motivationText.innerHTML = `<strong>“📋 Full ID copied!”</strong>`;
+                        setTimeout(setRandomQuote, 2000);
+                    });
+                }
+            });
+
+            setNameBtn.addEventListener('click', () => {
+                const name = myNameInput.value.trim();
+                if (name) {
+                    myName = name;
+                    localStorage.setItem('focusUserName', name);
+                    motivationText.innerHTML = `<strong>“✅ Name: ${escapeHtml(name)}”</strong>`;
+                    setTimeout(setRandomQuote, 2000);
+                    connections.forEach(conn => {
+                        try {
+                            conn.send({ type: 'handshake', name: myName });
+                        } catch (e) { /* ignore */ }
+                    });
+                } else {
+                    motivationText.innerHTML = `<strong>“⚠️ Enter a name”</strong>`;
+                }
+            });
+
+            myNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') setNameBtn.click();
+            });
+
+            // ----- Cleanup on page unload to release ID -----
+            window.addEventListener('beforeunload', function() {
+                if (peer && !peer.destroyed) {
+                    try {
+                        peer.destroy();
+                    } catch (e) { /* ignore */ }
+                }
+            });
+
+            // ----- Initialize -----
+            initPeer();
+            restoreAndSyncState();
+            sessionCountSpan.textContent = sessionCounter;
+            renderFriends();
+
+            setInterval(() => {
+                const count = Object.keys(friendsWithNames).length;
+                connectionStatus.textContent = count > 0 ?
+                    `🟢 ${count} friend(s) connected` :
+                    '⚪ No friends connected';
+            }, 5000);
+
+            console.log('✨ FOCUS ROOM · Short display IDs, full copy support');
+        })();
+    </script>
+</body>
+</html>
